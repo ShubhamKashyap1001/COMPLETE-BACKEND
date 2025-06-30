@@ -1,0 +1,8 @@
+# To encrypt The password , we use "bcrypt or bcrypt.js"
+- package name : npm i bcrypt
+- bcrypt = A library to help you hash passwords.
+
+# Middlewares 
+
+pre:-
+- Pre middleware functions are executed one after another, when each middleware calls next.

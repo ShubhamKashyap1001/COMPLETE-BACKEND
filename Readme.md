@@ -8,3 +8,5 @@ This is a complete backend series with javascript
   use this command:- 'controllers','db','middlewares','models','routes','utils' | ForEach-Object { New-Item -ItemType Directory -Name $_ }
 
 - url(![alt text](diagram-export-6-28-2025-11_20_01-AM.png))
+
+- multer - https://github.com/expressjs/multer
