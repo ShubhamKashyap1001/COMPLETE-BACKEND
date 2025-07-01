@@ -33,6 +33,9 @@ app.use("/api/v1/users", userRouter)
 app.get('/login',(req,res) => {
     res.send("login")
 })
+app.listen(process.env.PORT,()=>{
+    console.log("Server is running")
+})
 
 
 // http://localhost:8000/api/v1/users/register
