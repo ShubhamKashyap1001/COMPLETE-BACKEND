@@ -413,6 +413,108 @@ const updateUserCoverImage = asyncHandler(async(req,res) => {
     )
 })
 
+
+const getUserChannelProfile = asyncHandler(async(req,res) => {
+    const username = req.params
+
+    if(!username?.trim()){
+        throw new ApiError(400,"username is missing")
+    }
+
+    const channel = await User.aggregate([
+        {
+            $match : {
+                username : username?.toLowerCase(),
+            }
+            // Purpose:
+            // This stage filters the User collection to find the document with a matching username.
+
+        },{
+            $lookup :{
+                from : "subscriptions",
+                localfield : "_id",
+                foreignField : "channel",
+                as :"subscribers",
+            }
+            // This joins the subscriptions collection with the User collection by matching the user's _id to the channel field in subscriptions.
+            // Result: Adds an array called subscribers containing all users who subscribed to this channel.
+
+
+        },
+        {
+            $lookup: {
+                from : "subscriptions",
+                localField: "_id",
+                foreignField : "subcriber",
+                as : "subscribedTo"
+            }
+            // Purpose:
+            // This second lookup finds all channels that the user has subscribed to by matching their _id to the subcriber field.
+            // Result: Adds an array subscribedTo showing which channels this user follows.
+
+
+
+        },
+        {
+            $addFields : {
+                subscriberCount : {
+                    $size : "$subscribers"
+                },
+                channelsSubscribedToCount : {
+                    $size : "$subscribedTo"
+                },
+                isSubscribed : {
+                    $cond : {
+                        if : {$in : [req.user?._id,"subscribers.subscriber"]},
+                        then : true,
+                        else : false,
+                    }
+                }
+            }
+
+            // Purpose:
+
+            // subscriberCount: Counts how many users subscribed to this user.
+            // channelsSubscribedToCount: Counts how many channels the user follows.
+            // isSubscribed: Checks if the logged-in user (req.user._id) is one of the subscribers.
+            // Problem: $in is checking req.user._id inside "subscribers.subscriber" (a string).
+            // Fix: Should be $in: [req.user?._id, "$subscribers.subscriber"] (note the $).
+
+
+        },
+        {
+            $project : {
+                fullName : 1,
+                username : 1,
+                email : 1,
+                subscriberCount : 1,
+                channelsSubscribedToCount : 1,
+                avatar : 1,
+                coverImage : 1,
+                isSubscribed : 1,
+            }
+        }
+        // Purpose :
+        // This stage defines the final shape of the returned document. It includes only selected fields from the user document and calculated fields from the pipeline.
+
+
+    ])
+
+    if(!channel?.length){
+        throw new ApiError(400, " Channel doesn't existed ")
+    }
+
+    console.log("Channel : ",channel); 
+    
+    return res 
+    .status(200)
+    .json(
+        new ApiResponse(200 , channel[0], "User Channel Fetched Successfully")
+    )
+
+    
+})
+
 export { 
     registerUser,
     loginUser,
@@ -422,5 +524,6 @@ export {
     getCurrentUser,
     updateAccountDetails,
     updateUserAvatar,
-    updateUserCoverImage
+    updateUserCoverImage,
+    getUserChannelProfile
 }
